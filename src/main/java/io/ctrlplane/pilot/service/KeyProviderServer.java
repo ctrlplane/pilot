@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /** The server that provides the GRPC key provider. */
@@ -29,17 +30,20 @@ public class KeyProviderServer {
         this.service = service;
     }
 
-    /**
-     * Initializes the server.
-     *
-     * @throws IOException          on start error.
-     * @throws InterruptedException on thread interruption.
-     */
+    /** Initializes the server. */
     @PostConstruct
-    public void init()
-            throws IOException, InterruptedException {
-        start();
-        blockUntilShutdown();
+    public void init() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                start();
+                blockUntilShutdown();
+            } catch (final IOException e) {
+                LOG.error("Error starting server", e);
+            } catch (final InterruptedException e) {
+                LOG.warn("Server execution interrupted", e);
+            }
+        });
+
     }
 
     /**
@@ -79,7 +83,8 @@ public class KeyProviderServer {
     }
 
     /**
-     * Await termination on the main thread since the grpc library uses daemon threads.
+     * Await termination on the main thread since the grpc library
+     * uses daemon threads.
      */
     private void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
