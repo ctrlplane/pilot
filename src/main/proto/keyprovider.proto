@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package keyprovider;
+option java_package = "io.ctrlplane.pilot.keyprovider";
+option java_multiple_files = true;
+
+message keyProviderKeyWrapProtocolInput {
+    bytes KeyProviderKeyWrapProtocolInput = 1;
+}
+
+message keyProviderKeyWrapProtocolOutput {
+    bytes KeyProviderKeyWrapProtocolOutput = 1;
+}
+
+service KeyProviderService {
+    rpc WrapKey(keyProviderKeyWrapProtocolInput) returns (keyProviderKeyWrapProtocolOutput) {};
+    rpc UnWrapKey(keyProviderKeyWrapProtocolInput) returns (keyProviderKeyWrapProtocolOutput) {};
+}
