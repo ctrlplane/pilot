@@ -13,10 +13,10 @@ import java.util.Map;
 @NoArgsConstructor
 public class EncryptConfig {
 
-    @JsonProperty
+    @JsonProperty("Parameters")
     Map<String, byte[][]> parameters;
 
-    @JsonProperty("dc")
+    @JsonProperty("DecryptConfig")
     DecryptConfig decryptConfig;
 
 }
