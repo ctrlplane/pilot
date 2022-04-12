@@ -5,6 +5,7 @@ import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -22,12 +23,18 @@ public class KeyProviderServer {
 
     private final KeyProviderService service;
 
+    /** The port for the gRPC server to listen to. */
+    private final int port;
+
     /** The server for the key provider. */
     private Server server;
 
     @Autowired
-    public KeyProviderServer(KeyProviderService service) {
+    public KeyProviderServer(
+            final KeyProviderService service,
+            @Value("${grpc.port}") final int port) {
         this.service = service;
+        this.port = port;
     }
 
     /** Initializes the server. */
@@ -51,17 +58,17 @@ public class KeyProviderServer {
      *
      * @throws IOException on error starting server.
      */
-    private void start() throws IOException {
-        /* The port on which the server should run */
-        int port = 50051;
-        server = ServerBuilder.forPort(port)
+    private void start()
+            throws IOException {
+        server = ServerBuilder.forPort(this.port)
                 .addService(this.service)
                 .build()
                 .start();
         LOG.info("Server started, listening on " + port);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-            System.err.println("*** shutting down gRPC server since JVM is shutting down");
+            System.err.println(
+                    "*** shutting down gRPC server since JVM is shutting down");
             try {
                 KeyProviderServer.this.stop();
             } catch (InterruptedException e) {
@@ -76,17 +83,19 @@ public class KeyProviderServer {
      *
      * @throws InterruptedException on shutdown error.
      */
-    private void stop() throws InterruptedException {
+    private void stop()
+            throws InterruptedException {
         if (server != null) {
             server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
         }
     }
 
     /**
-     * Await termination on the main thread since the grpc library
-     * uses daemon threads.
+     * Await termination on the main thread since the grpc library uses daemon
+     * threads.
      */
-    private void blockUntilShutdown() throws InterruptedException {
+    private void blockUntilShutdown()
+            throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
         }
