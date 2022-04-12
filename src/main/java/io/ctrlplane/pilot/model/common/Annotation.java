@@ -11,9 +11,12 @@ import lombok.NoArgsConstructor;
 public class Annotation {
 
     @JsonProperty
-    byte[] wrappedKey;
+    byte[] iv;
 
     @JsonProperty
     String method;
+
+    @JsonProperty
+    byte[] wrappedKey;
 
 }

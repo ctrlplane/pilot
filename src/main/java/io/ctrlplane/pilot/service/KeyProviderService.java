@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.ctrlplane.pilot.crypt.AesCipher;
+import io.ctrlplane.pilot.crypt.CipherResult;
 import io.ctrlplane.pilot.keyprovider.KeyProviderServiceGrpc;
 import io.ctrlplane.pilot.keyprovider.keyProviderKeyWrapProtocolInput;
 import io.ctrlplane.pilot.keyprovider.keyProviderKeyWrapProtocolOutput;
@@ -61,8 +62,12 @@ public class KeyProviderService
             final WrapInput input = convertInput(request);
             final byte[] data =
                     input.getKeyWrapParams().getOptsData();
+            final CipherResult result =
+                    this.encryptor.encrypt(data);
             final keyProviderKeyWrapProtocolOutput response =
-                    convertWrapOutput(this.encryptor.encrypt(data));
+                    convertWrapOutput(
+                            result.getIv(),
+                            result.getCiphertext());
             responseObserver.onNext(response);
         } catch (final Exception e) {
             LOG.warn("Error wrapping", e);
@@ -76,7 +81,6 @@ public class KeyProviderService
     public void unWrapKey(
             final keyProviderKeyWrapProtocolInput request,
             final StreamObserver<keyProviderKeyWrapProtocolOutput> responseObserver) {
-
         try {
             final WrapInput input = convertInput(request);
             final Annotation annotation =
@@ -86,6 +90,7 @@ public class KeyProviderService
             final keyProviderKeyWrapProtocolOutput response =
                     convertUnwrapOutput(
                             this.encryptor.decrypt(
+                                    annotation.getIv(),
                                     annotation.getWrappedKey()));
             responseObserver.onNext(response);
         } catch (final Exception e) {
@@ -120,17 +125,22 @@ public class KeyProviderService
     /**
      * Converts the output from a wrap operation into protobuf response.
      *
-     * @param outputData The wrapped key.
+     * @param iv The encryption IV.
+     * @param ciphertext The wrapped key.
      *
      * @return The response.
      *
      * @throws JsonProcessingException on serialization error.
      */
     private keyProviderKeyWrapProtocolOutput convertWrapOutput(
-            final byte[] outputData)
+            final byte[] iv,
+            final byte[] ciphertext)
             throws JsonProcessingException {
         final Annotation annotation =
-                new Annotation(outputData, "null-encrypt");
+                new Annotation(
+                        iv,
+                        "AES-GCM",
+                        ciphertext);
         final WrapOutput output =
                 new WrapOutput(
                         new KeyWrapResults(
