@@ -128,10 +128,7 @@
 				<version>3.2.1</version>
 				<configuration>
 					<to>
-						<image>pilot</image>
-						<tags>
-							<tag>${project.version}</tag>
-						</tags>
+						<image>harbor.ctrlplane.net/ctrlplane/pilot:${project.version}</image>
 					</to>
 					<from>
 						<image>openjdk:8-jre-slim-buster</image>
