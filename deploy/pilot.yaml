@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctrlplane-pilot
+  namespace: ctrlplane-system
+  labels:
+    app: pilot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pilot
+  template:
+    metadata:
+      labels:
+        app: pilot
+    spec:
+      containers:
+      - name: pilot
+        image: harbor.ctrlplane.net/ctrlplane/pilot@sha256:4e08f20cb9632f794a5846b159d2063680d28f1320b455a08f5457a5ab5f9469
+        ports:
+        - containerPort: 50051
+      imagePullSecrets:
+      - name: ctrlplane_regcred
