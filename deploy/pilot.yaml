@@ -17,8 +17,53 @@ spec:
     spec:
       containers:
       - name: pilot
-        image: harbor.ctrlplane.net/ctrlplane/pilot@sha256:4e08f20cb9632f794a5846b159d2063680d28f1320b455a08f5457a5ab5f9469
+        image: harbor.ctrlplane.net/ctrlplane/pilot:0.0.1-SNAPSHOT
         ports:
         - containerPort: 50051
       imagePullSecrets:
-      - name: ctrlplane_regcred
+      - name: harbor-bot-cred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctrlplane-pilot-svc
+  namespace: ctrlplane-system
+  labels:
+    app: pilot
+spec:
+  selector:
+    app: pilot
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 50051
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+  name: pilot-ingress
+  namespace: ctrlplane-system
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: pilot.ctrlplane.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ctrlplane-pilot-svc
+            port:
+              number: 50051
+  #tls:
+  # This secret must exist beforehand
+  # The cert must also contain the subj-name grpctest.dev.mydomain.com
+  # https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/PREREQUISITES.md#tls-certificates
+  #- secretName: wildcard.dev.mydomain.com
+  #  hosts:
+  #    - grpctest.dev.mydomain.com
