@@ -1,0 +1,13 @@
+logging:
+  level:
+    io:
+      ctrlplane: DEBUG
+
+grpc:
+  port: 50051
+
+keyRequest:
+  baseUrl: http://localhost:8080/api/v1/key
+
+server:
+  port: 32323
