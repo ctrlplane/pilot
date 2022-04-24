@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
+import io.ctrlplane.pilot.client.KeyRequestClient;
 import io.ctrlplane.pilot.crypt.AesCipher;
 import io.ctrlplane.pilot.crypt.CipherResult;
 import io.ctrlplane.pilot.keyprovider.KeyProviderServiceGrpc;
 import io.ctrlplane.pilot.keyprovider.keyProviderKeyWrapProtocolInput;
 import io.ctrlplane.pilot.keyprovider.keyProviderKeyWrapProtocolOutput;
 import io.ctrlplane.pilot.model.common.Annotation;
+import io.ctrlplane.pilot.model.input.KeyUnwrapParams;
+import io.ctrlplane.pilot.model.input.KeyWrapParams;
 import io.ctrlplane.pilot.model.input.WrapInput;
 import io.ctrlplane.pilot.model.output.KeyUnwrapResults;
 import io.ctrlplane.pilot.model.output.KeyWrapResults;
@@ -23,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 /** The GRPC implementation. */
 @Component
@@ -44,14 +49,21 @@ public class KeyProviderService
     /** The cipher implementation for key wrapping/unwrapping. */
     private final AesCipher encryptor;
 
+    private final KeyRequestClient keyRequestClient;
+
     /**
      * Constructor.
      *
-     * @param encryptor The cipher implementation.
+     * @param encryptor        The cipher implementation.
+     * @param keyRequestClient The web client for requesting key encryption keys
+     *                         from copilot.
      */
     @Autowired
-    public KeyProviderService(AesCipher encryptor) {
+    public KeyProviderService(
+            AesCipher encryptor,
+            KeyRequestClient keyRequestClient) {
         this.encryptor = encryptor;
+        this.keyRequestClient = keyRequestClient;
     }
 
     @Override
@@ -60,10 +72,12 @@ public class KeyProviderService
             final StreamObserver<keyProviderKeyWrapProtocolOutput> responseObserver) {
         try {
             final WrapInput input = convertInput(request);
-            final byte[] data =
-                    input.getKeyWrapParams().getOptsData();
+            final KeyWrapParams params =
+                    input.getKeyWrapParams();
+            final byte[] kek = getKek(params);
+            final byte[] data = params.getOptsData();
             final CipherResult result =
-                    this.encryptor.encrypt(data);
+                    this.encryptor.encrypt(kek, data);
             final keyProviderKeyWrapProtocolOutput response =
                     convertWrapOutput(
                             result.getIv(),
@@ -83,6 +97,7 @@ public class KeyProviderService
             final StreamObserver<keyProviderKeyWrapProtocolOutput> responseObserver) {
         try {
             final WrapInput input = convertInput(request);
+            final byte[] key = getKek(input.getKeyUnWrapParams());
             final Annotation annotation =
                     deserializeAnnotation(
                             input.getKeyUnWrapParams()
@@ -90,6 +105,7 @@ public class KeyProviderService
             final keyProviderKeyWrapProtocolOutput response =
                     convertUnwrapOutput(
                             this.encryptor.decrypt(
+                                    key,
                                     annotation.getIv(),
                                     annotation.getWrappedKey()));
             responseObserver.onNext(response);
@@ -125,7 +141,7 @@ public class KeyProviderService
     /**
      * Converts the output from a wrap operation into protobuf response.
      *
-     * @param iv The encryption IV.
+     * @param iv         The encryption IV.
      * @param ciphertext The wrapped key.
      *
      * @return The response.
@@ -201,6 +217,50 @@ public class KeyProviderService
             final byte[] annotation)
             throws IOException {
         return OBJECT_MAPPER.readValue(annotation, Annotation.class);
+    }
+
+
+    /**
+     * Gets a key-encryption key from wrap parameters.
+     *
+     * @param wrapParams The wrap parameters.
+     *
+     * @return The key bytes.
+     */
+    private byte[] getKek(final KeyWrapParams wrapParams) {
+        final Map<String, byte[][]> parameterMap =
+                wrapParams.getEncryptConfig().getParameters();
+        return getKek(parameterMap);
+    }
+
+    /**
+     * Gets a key-encryption key from unwrap parameters.
+     *
+     * @param unwrapParams The unwrap parameters.
+     *
+     * @return The key bytes.
+     */
+    private byte[] getKek(final KeyUnwrapParams unwrapParams) {
+        final Map<String, byte[][]> parameterMap =
+                unwrapParams.getDecryptConfig().getParameters();
+        return getKek(parameterMap);
+    }
+
+    /**
+     * Gets a key-encryption key from a parameters map.
+     *
+     * @param parameterMap The parameters.
+     *
+     * @return The key bytes.
+     */
+    private byte[] getKek(final Map<String, byte[][]> parameterMap) {
+        final byte[][] pilotParam = parameterMap.get("pilot");
+        if (pilotParam.length < 1) {
+            throw new IllegalArgumentException(
+                    "Argument required with key pilot");
+        }
+        return this.keyRequestClient.requestKey(
+                new String(pilotParam[0], StandardCharsets.UTF_8));
     }
 
     /**
