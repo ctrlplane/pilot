@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctrlplane-pilot
+  namespace: ctrlplane-system
+  labels:
+    app: pilot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pilot
+  template:
+    metadata:
+      labels:
+        app: pilot
+    spec:
+      containers:
+      - name: pilot
+        image: quay.io/ctrlplane/pilot:0.0.2-SNAPSHOT
+        ports:
+        - containerPort: 50051
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctrlplane-pilot-grpc
+  namespace: ctrlplane-system
+labels:
+  app: pilot
+spec:
+  selector:
+    app: pilot
+  ports:
+  - protocol: TCP
+    port: 50051
+    targetPort: 50051
+    nodePort: 30051
+  type: NodePort
+# You can alternatively use a compatible ingress controller if that ingress controller has
+# the ability to make gRPC endpoints. This is a likley more production-ready setup,
+# as NodePort services are generally not permitted by many Kubernetes admission control policies
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: ctrlplane-pilot-grpc
+#  namespace: ctrlplane-system
+#  labels:
+#    app: pilot
+#spec:
+#  selector:
+#    app: pilot
+#  ports:
+#  - protocol: TCP
+#    port: 80
+#    targetPort: 50051
+#  type: ClusterIP
+#---
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  annotations:
+#    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+#  name: pilot-ingress
+#  namespace: ctrlplane-system
+#spec:
+#  ingressClassName: nginx
+#  tls:
+#  - hosts:
+#      - pilot.ctrlplane.dev
+#    secretName: pilot-tls  
+#  rules:
+#  - host: pilot.ctrlplane.dev
+#    http:
+#      paths:
+#      - path: /
+#        pathType: Prefix
+#        backend:
+#          service:
+#            name: ctrlplane-pilot-grpc
+#            port:
+#              number: 50051
+#  #tls:
+#  # This secret must exist beforehand
+#  # The cert must also contain the subj-name grpctest.dev.mydomain.com
+#  # https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/PREREQUISITES.md#tls-certificates
+#  #- secretName: wildcard.dev.mydomain.com
+#  #  hosts:
+#  #    - pilot.ctrlplane.dev
