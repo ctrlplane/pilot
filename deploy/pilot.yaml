@@ -38,7 +38,7 @@ spec:
     nodePort: 30051
   type: NodePort
 # You can alternatively use a compatible ingress controller if that ingress controller has
-# the ability to make gRPC endpoints. This is a likley more production-ready setup,
+# the ability to make gRPC endpoints. This is likley a more production-ready setup,
 # as NodePort services are generally not permitted by many Kubernetes admission control policies
 #---
 #apiVersion: v1
