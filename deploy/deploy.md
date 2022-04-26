@@ -26,7 +26,7 @@ EOF
 
 ## Standalone
 
-The easiest way to run `pilot` is the use Docker or Podman to create a local gRPC server on the node you'd like to use for image encryption and decryption. For example, you may have a development or build machine where you'd like access to your team's image encryption resources.
+The easiest way to run `pilot` is to use Docker or Podman to create a local gRPC server on the node you'd like to use for image encryption and decryption. For example, you may have a development or build machine where you'd like access to your team's image encryption resources.
 
 1. Start `pilot`, being sure to set the `GRPC_PORT` environment variable. This is the port on which `pilot` will listen for incoming `keyWrap` requests from your container tooling or runtime. *The default gRPC port is `50051`.* Also set the `KEYREQUEST_BASEURL` environment variable to the URL of `copilot`'s API endpoint. *The default URL is `http://localhost:8080/api/v1/key`.*
 ```
