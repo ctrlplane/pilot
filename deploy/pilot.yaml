@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pilot-config
+  namespace: ctrlplane-system
+  labels:
+    app: pilot
+data:
+  grpc.port: "50051"
+  keyrequest.baseurl: "http://copilot.svc/api/v1/key"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,14 +31,25 @@ spec:
         image: quay.io/ctrlplane/pilot:0.0.2-SNAPSHOT
         ports:
         - containerPort: 50051
+        env:
+        - name: GRPC_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: pilot-config
+              key: grpc.port
+        - name: KEYREQUEST_BASEURL
+          valueFrom:
+            configMapKeyRef:
+              name: pilot-config
+              key: keyrequest.baseurl
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: ctrlplane-pilot-grpc
   namespace: ctrlplane-system
-labels:
-  app: pilot
+  labels:
+    app: pilot
 spec:
   selector:
     app: pilot
