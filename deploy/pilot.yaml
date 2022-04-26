@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: pilot-config
   namespace: ctrlplane-system
+  labels:
+    app: pilot
 data:
   grpc.port: "50051"
   keyrequest.baseurl: "http://copilot.svc/api/v1/key"
