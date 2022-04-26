@@ -2,9 +2,11 @@ package io.ctrlplane.pilot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
 /** The application entry point. */
 @SpringBootApplication
+@EnableCaching
 public class Application {
 
     /**
