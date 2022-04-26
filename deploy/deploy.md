@@ -9,6 +9,21 @@ Pilot is compatible with any tools or runtimes that leverage the [ocicrypt](http
 
 # Running `pilot`
 
+## Configure Tooling to use `pilot`
+
+Depending on the container tooling and/or runtime you use, the location of `ocicrypt.conf` will vary. If using `pilot` for CI or image building and shipping, you can simply create the config in your home directory:
+```
+cat <<EOF > ${HOME}/ocicrypt.conf
+{
+    "key-providers": {
+        "pilot": {
+            "grpc": "localhost:50051"
+        }
+    }
+}
+EOF   
+```
+
 ## Standalone
 
 The easiest way to run `pilot` is the use Docker or Podman to create a local gRPC server on the node you'd like to use for image encryption and decryption. For example, you may have a development or build machine where you'd like access to your team's image encryption resources.
