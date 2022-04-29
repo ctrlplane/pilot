@@ -1,6 +1,11 @@
 # Prerequisites
 
-Pilot is compatible with any tools or runtimes that leverage the [ocicrypt](https://github.com/containers/ocicrypt) `keyprovider` protocol. Currently, these include:
+- [podman](https://podman.io/) or [docker](https://docs.docker.com/get-docker/)
+- A Kubernetes cluster (if deploying `pilot` in production).
+
+# Compatibility
+
+`pilot` is compatible with any tools or runtimes that leverage the [ocicrypt](https://github.com/containers/ocicrypt) `keyprovider` protocol. Currently, these include:
 
 - [skopeo](https://github.com/containers/skopeo)
 - [containerd](https://github.com/containerd/containerd)
