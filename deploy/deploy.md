@@ -17,14 +17,14 @@ cat <<EOF > ${HOME}/ocicrypt.conf
 {
     "key-providers": {
         "pilot": {
-            "grpc": "localhost:50051"
+            "grpc": "localhost:50041"
         }
     }
 }
 EOF   
 ```
 
-## Standalone
+## Podman or Docker
 
 The easiest way to run `pilot` is to use Docker or Podman to create a local gRPC server on the node you'd like to use for image encryption and decryption. For example, you may have a development or build machine where you'd like access to your team's image encryption resources.
 
