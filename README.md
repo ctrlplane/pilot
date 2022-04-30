@@ -6,7 +6,7 @@ Key provider middleware
 ## Running 
 To run with podman: 
 
-```podman run -d --network=host harbor.ctrlplane.net/ctrlplane/pilot:0.0.2-SNAPSHOT```
+```podman run -d --network=host quay.io/ctrlplane/pilot:0.0.2-SNAPSHOT```
 
 (Using host mode is the easiest way to connect to copilot on localhost; otherwise change the baseUrl in the configuration)
 
@@ -14,10 +14,9 @@ To run with podman:
 
 From the top level of the repository:
 
-```$ mvn clean compile jib:build```
+```$ mvn -B --file pom.xml```
 
-This builds the image and deploys it to the harbor repository.
-No local docker daemon is required for the build.
+This will create an executable `.jar` file in the `target` directory.
 
 ## License
 Copyright © 2022, Control Plane Software, LLC. Released under the [GPL-3.0 License.](https://github.com/ctrlplane/pilot/blob/main/LICENSE)
