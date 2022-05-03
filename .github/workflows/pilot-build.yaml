@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: pilot-build
+name: Build
 on:
   push:
     branches: [ main ]
@@ -19,4 +19,4 @@ jobs:
           architecture: x64
           cache: maven
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn clean package
