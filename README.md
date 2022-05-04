@@ -6,7 +6,7 @@ Key provider middleware
 ## Running 
 To run with podman: 
 
-```podman run -d --network=host quay.io/ctrlplane/pilot:0.0.2-SNAPSHOT```
+```podman run -d --network=host quay.io/ctrlplane/pilot:latest```
 
 (Using host mode is the easiest way to connect to copilot on localhost; otherwise change the baseUrl in the configuration)
 
