@@ -18,12 +18,14 @@ import io.ctrlplane.pilot.model.output.KeyUnwrapResults;
 import io.ctrlplane.pilot.model.output.KeyWrapResults;
 import io.ctrlplane.pilot.model.output.WrapOutput;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -70,24 +72,22 @@ public class KeyProviderService
     public void wrapKey(
             final keyProviderKeyWrapProtocolInput request,
             final StreamObserver<keyProviderKeyWrapProtocolOutput> responseObserver) {
-        try {
-            final WrapInput input = convertInput(request);
-            final KeyWrapParams params =
-                    input.getKeyWrapParams();
-            final byte[] kek = getKek(params);
-            final byte[] data = params.getOptsData();
-            final CipherResult result =
-                    this.encryptor.encrypt(kek, data);
-            final keyProviderKeyWrapProtocolOutput response =
-                    convertWrapOutput(
-                            result.getIv(),
-                            result.getCiphertext());
-            responseObserver.onNext(response);
-        } catch (final Exception e) {
-            LOG.warn("Error wrapping", e);
-            responseObserver.onError(
-                    new StatusRuntimeException(Status.INVALID_ARGUMENT));
-        }
+        handleErrors(
+                responseObserver,
+                () -> {
+                    final WrapInput input = convertInput(request);
+                    final KeyWrapParams params =
+                            input.getKeyWrapParams();
+                    final byte[] kek = getKek(params);
+                    final byte[] data = params.getOptsData();
+                    final CipherResult result =
+                            this.encryptor.encrypt(kek, data);
+                    final keyProviderKeyWrapProtocolOutput response =
+                            convertWrapOutput(
+                                    result.getIv(),
+                                    result.getCiphertext());
+                    responseObserver.onNext(response);
+                });
         responseObserver.onCompleted();
     }
 
@@ -95,26 +95,55 @@ public class KeyProviderService
     public void unWrapKey(
             final keyProviderKeyWrapProtocolInput request,
             final StreamObserver<keyProviderKeyWrapProtocolOutput> responseObserver) {
-        try {
-            final WrapInput input = convertInput(request);
-            final byte[] key = getKek(input.getKeyUnWrapParams());
-            final Annotation annotation =
-                    deserializeAnnotation(
-                            input.getKeyUnWrapParams()
-                                    .getAnnotation());
-            final keyProviderKeyWrapProtocolOutput response =
-                    convertUnwrapOutput(
-                            this.encryptor.decrypt(
-                                    key,
-                                    annotation.getIv(),
-                                    annotation.getWrappedKey()));
-            responseObserver.onNext(response);
-        } catch (final Exception e) {
-            LOG.warn("Error unwrapping", e);
-            responseObserver.onError(
-                    new StatusRuntimeException(Status.INVALID_ARGUMENT));
-        }
+        handleErrors(
+                responseObserver,
+                () -> {
+                    final WrapInput input = convertInput(request);
+                    final byte[] key = getKek(input.getKeyUnWrapParams());
+                    final Annotation annotation =
+                            deserializeAnnotation(
+                                    input.getKeyUnWrapParams()
+                                            .getAnnotation());
+                    final keyProviderKeyWrapProtocolOutput response =
+                            convertUnwrapOutput(
+                                    this.encryptor.decrypt(
+                                            key,
+                                            annotation.getIv(),
+                                            annotation.getWrappedKey()));
+                    responseObserver.onNext(response);
+                });
         responseObserver.onCompleted();
+    }
+
+    /**
+     * Convert an HTTP status code to a GRPC status.
+     *
+     * @param httpStatus The HTTP status code.
+     *
+     * @return The GRPC status.
+     */
+    private Status convertHttpStatus(final HttpStatus httpStatus) {
+        final Status status;
+        switch (httpStatus) {
+            case FORBIDDEN:
+                status = Status.PERMISSION_DENIED;
+                break;
+            case NOT_FOUND:
+                status = Status.NOT_FOUND;
+                break;
+            case UNAUTHORIZED:
+                status = Status.UNAUTHENTICATED;
+                break;
+            case BAD_REQUEST:
+                status = Status.INVALID_ARGUMENT;
+                break;
+            case INTERNAL_SERVER_ERROR:
+                status = Status.INTERNAL;
+                break;
+            default:
+                status = Status.UNKNOWN;
+        }
+        return status;
     }
 
     /**
@@ -219,7 +248,6 @@ public class KeyProviderService
         return OBJECT_MAPPER.readValue(annotation, Annotation.class);
     }
 
-
     /**
      * Gets a key-encryption key from wrap parameters.
      *
@@ -264,6 +292,37 @@ public class KeyProviderService
     }
 
     /**
+     * Handles errors and passes off to response observer.
+     *
+     * @param responseObserver The response observer.
+     * @param wrapMethod       The method to wrap in error handling.
+     */
+    private void handleErrors(
+            final StreamObserver<?> responseObserver,
+            final WrapInterface wrapMethod) {
+        try {
+            wrapMethod.execute();
+        } catch (final WebClientResponseException e) {
+            LOG.error("Response {}: {}",
+                      e.getStatusCode(), e.getStatusText());
+            responseObserver.onError(
+                    convertHttpStatus(e.getStatusCode())
+                            .asRuntimeException());
+        } catch (final WebClientRequestException e) {
+            LOG.error("Request error", e);
+            responseObserver.onError(
+                    Status.UNAVAILABLE
+                            .withDescription("Error connecting to copilot")
+                            .asRuntimeException());
+        } catch (final Exception e) {
+            LOG.warn("Error during encryption", e);
+            responseObserver.onError(
+                    Status.UNKNOWN.withDescription("Unknown error occurred")
+                            .asRuntimeException());
+        }
+    }
+
+    /**
      * Serializes an {@link Annotation} into bytes.
      *
      * @param annotation The object.
@@ -276,5 +335,17 @@ public class KeyProviderService
             final Annotation annotation)
             throws JsonProcessingException {
         return OBJECT_MAPPER.writeValueAsBytes(annotation);
+    }
+
+    /** An interface for passing wrap methods into error handling.*/
+    @FunctionalInterface
+    private interface WrapInterface {
+
+        /**
+         * Executes the wrap method.
+         *
+         * @throws Exception on error.
+         */
+        void execute() throws Exception;
     }
 }

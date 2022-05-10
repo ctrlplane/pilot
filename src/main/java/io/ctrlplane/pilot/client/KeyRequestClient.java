@@ -46,16 +46,17 @@ public class KeyRequestClient {
         return this.webClient.get()
                 .uri("/{kekId}", kekId)
                 .exchangeToMono(response -> {
-                    if (response.statusCode()
-                            .equals(HttpStatus.OK)) {
+                    final HttpStatus status = response.statusCode();
+                    if (status.equals(HttpStatus.OK)) {
                         return response.bodyToMono(byte[].class);
                     } else {
-                        LOG.error("Copilot response with code {}",
-                                  response.statusCode());
+                        LOG.info("Copilot response with code {}",
+                                  status);
                         return response.createException()
                                 .flatMap(Mono::error);
                     }
                 })
+                .onErrorResume(Mono::error)
                 .block();
     }
 
