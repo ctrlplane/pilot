@@ -60,7 +60,7 @@ $ kubectl create namespace ctrlplane-system
 ```
 2. Deploy pilot
 ```
-$ kubectl apply -f https://github.com/ctrlplane/pilot/blob/main/deploy/pilot.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/ctrlplane/pilot/main/deploy/pilot.yaml
 ```
 3. Verify the deployment
 ```
