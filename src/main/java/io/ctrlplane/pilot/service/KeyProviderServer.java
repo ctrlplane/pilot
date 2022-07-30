@@ -4,7 +4,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +28,6 @@ public class KeyProviderServer {
     /** The server for the key provider. */
     private Server server;
 
-    @Autowired
     public KeyProviderServer(
             final KeyProviderService service,
             @Value("${grpc.port}") final int port) {
@@ -48,6 +46,7 @@ public class KeyProviderServer {
                 LOG.error("Error starting server", e);
             } catch (final InterruptedException e) {
                 LOG.warn("Server execution interrupted", e);
+                Thread.currentThread().interrupt();
             }
         });
 
@@ -64,15 +63,16 @@ public class KeyProviderServer {
                 .addService(this.service)
                 .build()
                 .start();
-        LOG.info("Server started, listening on " + port);
+        LOG.info("Server started, listening on {}", port);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             // Use stderr here since the logger may have been reset by its JVM shutdown hook.
             System.err.println(
                     "*** shutting down gRPC server since JVM is shutting down");
             try {
                 KeyProviderServer.this.stop();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 e.printStackTrace(System.err);
+                Thread.currentThread().interrupt();
             }
             System.err.println("*** server shut down");
         }));
