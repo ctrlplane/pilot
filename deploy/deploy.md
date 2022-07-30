@@ -52,7 +52,7 @@ $ OCICRYPT_KEYPROVIDER_CONFIG=ocicrypt.conf skopeo copy --decryption-key provide
 
 ## Kubernetes
 
-Use the provided manifest `pilot.yaml` as a refernce point to create an instance of `pilot` in your Kubernetes environment. See the [copilot repository](https://github.com/ctrlplane/copilot) for details on deploying `copilot` in your on-prem or VPC environment.
+Use the provided manifest `pilot.yaml` as a reference point to create an instance of `pilot` in your Kubernetes environment. See the [copilot repository](https://github.com/ctrlplane/copilot) for details on deploying `copilot` in your on-prem or VPC environment.
 
 1. Create the `ctrlplane-system` namespace
 ```
@@ -60,7 +60,7 @@ $ kubectl create namespace ctrlplane-system
 ```
 2. Deploy pilot
 ```
-$ kubectl apply -f https://github.com/ctrlplane/pilot/blob/main/deploy/pilot.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/ctrlplane/pilot/main/deploy/pilot.yaml
 ```
 3. Verify the deployment
 ```
