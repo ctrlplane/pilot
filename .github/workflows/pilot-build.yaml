@@ -28,11 +28,8 @@ jobs:
         run: |
           # Find the built jar in the target/ directory
           export JAR_PATH=$(find target/ -name pilot*.jar)
-          # Get the basename
-          export JAR_NAME=$(basename ${JAR_PATH})
-          # Make vars available to next step
+          # Make JAR_PATH available to next step
           echo "JAR_PATH=${JAR_PATH}" >> $GITHUB_ENV
-          echo "::set-output name=pilot_jar_name::${JAR_NAME}"
 
       - name: Upload pilot.jar
         uses: actions/upload-artifact@v3
@@ -40,25 +37,21 @@ jobs:
           name: pilot
           path: ${{ env.JAR_PATH }}
 
-    outputs:
-      pilot_jar_name: ${{ steps.set-vars.ouputs.pilot_jar_name }}
-
   run-pilot:
     runs-on: ubuntu-20.04
     needs: build-pilot    
     steps:
     
-      - name: Download pilot Jar
+      - id: download
         uses: actions/download-artifact@v3
         with:
           name: pilot
 
       - name: check what's in this directory
-        run: |
-          ls -al && echo ${{needs.build-pilot.outputs.pilot_jar_name}}
+        run: ls -al
 
-          #- name: Run pilot
-          #run: nohup java -jar ${{ needs.build-pilot.outputs.pilot_jar_name }} &
+      - name: Run pilot
+        run: nohup java -jar ${{steps.download.outputs.download-path}} &
 
       - name: Finish
         run: echo "done!"
