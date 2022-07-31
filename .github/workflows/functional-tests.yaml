@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Functional
+on:
+  workflow_run:
+    workflows: [Build]
+    types:
+      - completed
+jobs:
+  run-pilot:
+    runs-on: ubuntu-20.04
+    needs: build-pilot    
+    steps:
+    
+      - id: download
+        uses: actions/download-artifact@v3
+        with:
+          name: pilot_jar
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+          architecture: x64
+
+      - name: get jar name
+        run: | 
+          export JAR_NAME=$(find . -name pilot*.jar)
+          echo "JAR_NAME=${JAR_NAME}" >> $GITHUB_ENV
+
+      - name: Run pilot
+        run: nohup java -jar ${JAR_NAME} &
+
+      - name: check for pilot running
+        run: ps -ef |grep pilot
+
+      - run: echo "done"
+
