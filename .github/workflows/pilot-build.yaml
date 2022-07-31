@@ -46,6 +46,7 @@ jobs:
   run-pilot:
     runs-on: ubuntu-20.04
     needs: build-pilot    
+    steps:
     
       - name: Download pilot Jar
         uses: actions/download-artifact@v3
