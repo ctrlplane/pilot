@@ -47,11 +47,16 @@ jobs:
         with:
           name: pilot
 
-      - name: check what's in this directory
-        run: ls -al
+      - name: get jar name
+        run: | 
+          export JAR_NAME=$(find . -name pilot*.jar)
+          echo "JAR_NAME=${JAR_NAME}" >> $GITHUB_ENV
 
       - name: Run pilot
-        run: nohup java -jar ${{steps.download.outputs.download-path}} &
+        run: nohup java -jar ${JAR_NAME} &
 
-      - name: Finish
-        run: echo "done!"
+      - name: check for pilot running
+        run: ps -ef |grep pilot
+
+      - run: echo "done"
+
