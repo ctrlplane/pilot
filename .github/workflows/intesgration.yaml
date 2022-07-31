@@ -42,7 +42,7 @@ jobs:
       - name: Pull busybox
         run: skopeo copy docker://busybox:latest oci:busybox
 
-      - name:
+      - name: create ocicrypt.conf
         uses: "finnp/create-file-action@master"
           env:
             FILE_NAME: "ocicrypt.conf"
