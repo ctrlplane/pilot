@@ -9,7 +9,6 @@ on:
 jobs:
   skopeo-encrypt-decrypt:
     runs-on: ubuntu-20.04
-    needs: build-pilot    
     steps:
     
       - id: download
