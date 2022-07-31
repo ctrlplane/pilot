@@ -43,10 +43,7 @@ jobs:
         run: skopeo copy docker://busybox:latest oci:busybox
 
       - name: create ocicrypt.conf
-        uses: "finnp/create-file-action@master"
-          env:
-            FILE_NAME: "ocicrypt.conf"
-            FILE_BASE64: "Z3JwYyI6ICJsb2NhbGhvc3Q6NTAwNTEiCiAgICAgICAgfQogICAgfQp9Cg=="
+        run: echo "ewogICAgImtleS1wcm92aWRlcnMiOiB7CiAgICAgICAgInBpbG90IjogewogICAgICAgICAgICAiZ3JwYyI6ICJsb2NhbGhvc3Q6NTAwNTEiCiAgICAgICAgfQogICAgfQp9Cg==" | base64 --decode > ocicrypt.conf
 
       - name: Encrypt image using test key
         run: |
