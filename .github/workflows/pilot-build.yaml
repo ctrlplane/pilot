@@ -52,9 +52,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: pilot
-    
-      - name: Run pilot
-        run: nohup java -jar ${{ needs.build-pilot.outputs.pilot_jar_name }} &
+
+      - name: check what's in this directory
+        run: |
+          ls -al && echo ${{needs.build-pilot.outputs.pilot_jar_name}}
+
+          #- name: Run pilot
+          #run: nohup java -jar ${{ needs.build-pilot.outputs.pilot_jar_name }} &
 
       - name: Finish
         run: echo "done!"
