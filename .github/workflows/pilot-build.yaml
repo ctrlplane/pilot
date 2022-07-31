@@ -10,7 +10,9 @@ jobs:
   build-pilot:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -18,5 +20,40 @@ jobs:
           distribution: 'adopt'
           architecture: x64
           cache: maven
+
       - name: Build with Maven
         run: mvn clean package
+
+      - name: set-vars
+        run: |
+          # Find the built jar in the target/ directory
+          export JAR_PATH=$(find target/ -name pilot*.jar)
+          # Get the basename
+          export JAR_NAME=$(basename ${JAR_PATH})
+          # Make vars available to next step
+          echo "JAR_PATH=${JAR_PATH}" >> $GITHUB_ENV
+          echo "::set-output name=pilot_jar_name::${JAR_NAME}"
+
+      - name: Upload pilot.jar
+        uses: actions/upload-artifact@v3
+        with:
+          name: pilot
+          path: ${{ env.JAR_PATH }}
+
+    outputs:
+      pilot_jar_name: ${{ steps.set-vars.ouputs.pilot_jar_name }}
+
+  run-pilot:
+    runs-on: ubuntu-20.04
+    needs: build-pilot    
+    
+      - name: Download pilot Jar
+        uses: actions/download-artifact@v3
+        with:
+          name: pilot
+    
+      - name: Run pilot
+        run: nohup java -jar ${{ needs.build-pilot.outputs.pilot_jar_name }} &
+
+      - name: Finish
+        run: echo "done!"
