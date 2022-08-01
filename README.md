@@ -1,7 +1,7 @@
 # pilot
 Key provider middleware
 ## Status
-![pilot CI](https://github.com/ctrlplane/pilot/actions/workflows/pilot-build.yaml/badge.svg)
+![pilot CI](https://github.com/ctrlplane/pilot/actions/workflows/build.yaml/badge.svg)
 
 ## Running 
 To run with podman: 
