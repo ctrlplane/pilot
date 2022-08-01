@@ -11,9 +11,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     
-      - id: download
-        uses: actions/download-artifact@v3
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
         with:
+          workflow: build.yaml
+          workflow_conclusion: success
           name: pilot_jar
 
       - name: Set up JDK 17
