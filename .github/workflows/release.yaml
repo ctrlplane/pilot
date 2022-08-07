@@ -1,5 +1,4 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Java Semantic Release Example
+name: Release
 on:
   push:
     branches:
