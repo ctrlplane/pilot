@@ -10,6 +10,7 @@
 
 ## Status
 ![pilot CI](https://github.com/ctrlplane/pilot/actions/workflows/build.yaml/badge.svg)
+[![CodeQL](https://github.com/ctrlplane/pilot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ctrlplane/pilot/actions/workflows/codeql-analysis.yml)
 
 ## Quick Start 
 To run with podman: 
