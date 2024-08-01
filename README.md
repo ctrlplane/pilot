@@ -46,7 +46,7 @@ For more detailed information about container image encryption, see the [ocicryp
 
 Currently, `pilot` supports the following key encryption strategies:
 
-* AES256-GCM Symetric Encryption
+* AES256-GCM Symmetric Encryption
 
 ## License
 Copyright © 2022, Control Plane Software, LLC. Released under the [GPL-3.0 License.](https://github.com/ctrlplane/pilot/blob/main/LICENSE)
